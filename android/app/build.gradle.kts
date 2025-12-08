@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.final_project"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23     //API 23 corresponds to Android 6.0 (Marshmallow), released in 2015.
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
