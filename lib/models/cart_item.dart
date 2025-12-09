@@ -1,5 +1,4 @@
 class CartItem {
-
   final String id;
   final String name;
   final int quantity;
