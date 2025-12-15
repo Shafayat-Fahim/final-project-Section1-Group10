@@ -18,7 +18,6 @@ class _AuthScreenState extends State<AuthScreen> {
   var _userEmail = '';
   var _userName = '';
   var _userPassword = '';
-  final _forgotPasswordEmailController = TextEditingController();
 
   void _trySubmit() async {
     final isValid = _formKey.currentState!.validate();
@@ -30,22 +29,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
       try {
         if (_isLogin) {
-          // LOG IN
-          await _auth.signInWithEmailAndPassword(
-            email: _userEmail,
-            password: _userPassword,
-          );
+          await _auth.signInWithEmailAndPassword(email: _userEmail, password: _userPassword);
         } else {
-          // SIGN UP
           UserCredential userCred = await _auth.createUserWithEmailAndPassword(
-            email: _userEmail,
-            password: _userPassword,
-          );
-
-          // Update Display Name
+              email: _userEmail, password: _userPassword);
           await userCred.user!.updateDisplayName(_userName);
-
-          // Create User Document in Firestore (Critical for Profile/Checkout)
           await FirebaseFirestore.instance.collection('users').doc(userCred.user!.uid).set({
             'name': _userName,
             'email': _userEmail,
@@ -59,125 +47,111 @@ class _AuthScreenState extends State<AuthScreen> {
           SnackBar(content: Text(error.message ?? 'Error'), backgroundColor: Colors.red),
         );
         setState(() => _isLoading = false);
-      } catch (err) {
-        setState(() => _isLoading = false);
       }
     }
-  }
-
-  void _showForgotPasswordDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your email to receive a reset link.'),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _forgotPasswordEmailController,
-              decoration: const InputDecoration(labelText: 'Email Address'),
-              keyboardType: TextInputType.emailAddress,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final email = _forgotPasswordEmailController.text.trim();
-              if (email.isEmpty || !email.contains('@')) return;
-              Navigator.of(ctx).pop();
-              try {
-                await _auth.sendPasswordResetEmail(email: email);
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reset email sent!'), backgroundColor: Colors.green));
-              } catch (e) {
-                // handle error
-              }
-            },
-            child: const Text('Send Email'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade700,
+      backgroundColor: const Color(0xFF1B1F24), // Dark Background
       body: Center(
-        child: Card(
-          margin: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.person, size: 50, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 20),
-
-                    if (!_isLogin)
-                      TextFormField(
-                        key: const ValueKey('username'),
-                        validator: (value) => (value == null || value.length < 4) ? 'Enter full name' : null,
-                        decoration: const InputDecoration(labelText: 'Full Name'),
-                        onSaved: (value) => _userName = value!.trim(),
-                      ),
-
-                    TextFormField(
-                      key: const ValueKey('email'),
-                      validator: (value) => (value == null || !value.contains('@')) ? 'Enter valid email' : null,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(labelText: 'Email Address'),
-                      onSaved: (value) => _userEmail = value!.trim(),
-                    ),
-
-                    TextFormField(
-                      key: const ValueKey('password'),
-                      validator: (value) => (value == null || value.length < 7) ? 'Password too short' : null,
-                      decoration: const InputDecoration(labelText: 'Password'),
-                      obscureText: true,
-                      onSaved: (value) => _userPassword = value!.trim(),
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (_isLogin && !_isLoading)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: _showForgotPasswordDialog,
-                          child: const Text('Forgot Password?'),
-                        ),
-                      ),
-
-                    if (_isLoading) const CircularProgressIndicator(),
-                    if (!_isLoading)
-                      ElevatedButton(
-                        onPressed: _trySubmit,
-                        style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                        child: Text(_isLogin ? 'Login' : 'Signup'),
-                      ),
-                    if (!_isLoading)
-                      TextButton(
-                        onPressed: () => setState(() => _isLogin = !_isLogin),
-                        child: Text(_isLogin ? 'Create new account' : 'I already have an account'),
-                      ),
-                  ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Icon(Icons.anchor, size: 100, color: Color(0xFF007BFF)), // Anchor Icon
+              const SizedBox(height: 10),
+              const Text(
+                "ANCHOR SPORTS",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900, // Extra Bold
+                  letterSpacing: 1.5,
                 ),
               ),
-            ),
+              const SizedBox(height: 40),
+              Card(
+                color: Colors.white.withOpacity(0.05),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!_isLogin)
+                          TextFormField(
+                            style: const TextStyle(color: Colors.white),
+                            decoration: _inputDecoration("Full Name", Icons.person),
+                            validator: (v) => (v == null || v.length < 4) ? 'Enter name' : null,
+                            onSaved: (v) => _userName = v!.trim(),
+                          ),
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          decoration: _inputDecoration("Email", Icons.email),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) => (v == null || !v.contains('@')) ? 'Invalid email' : null,
+                          onSaved: (v) => _userEmail = v!.trim(),
+                        ),
+                        const SizedBox(height: 15),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          decoration: _inputDecoration("Password", Icons.lock),
+                          obscureText: true,
+                          validator: (v) => (v == null || v.length < 7) ? 'Short password' : null,
+                          onSaved: (v) => _userPassword = v!.trim(),
+                        ),
+                        const SizedBox(height: 30),
+                        if (_isLoading)
+                          const CircularProgressIndicator(color: Color(0xFF007BFF))
+                        else
+                          Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                height: 55,
+                                child: ElevatedButton(
+                                  onPressed: _trySubmit,
+                                  child: Text(_isLogin ? 'LOG IN' : 'SIGN UP'),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() => _isLogin = !_isLogin),
+                                child: Text(
+                                  _isLogin ? 'NEW HERE? CREATE ACCOUNT' : 'HAVE AN ACCOUNT? LOG IN',
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      prefixIcon: Icon(icon, color: const Color(0xFF007BFF)),
+      enabledBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.white24),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Color(0xFF007BFF)),
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }
